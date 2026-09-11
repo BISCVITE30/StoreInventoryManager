@@ -24,7 +24,7 @@ namespace Program
     {
         static public void Main(string[] args)
         {
-
+            bool isActive = true;
             List<Product> productsList= new List<Product>()
             {
                 new Product("P001", "Wireless Mouse", "Electronics", 29.99, 15), 
@@ -34,6 +34,8 @@ namespace Program
                 new Product("P005", "USB-C Charging Cable", "Electronic", 9.99, 40)
             };
 
+            while(isActive)
+            {
             string[] programMenu =
             {
                 "1. Add a new product",
@@ -53,6 +55,20 @@ namespace Program
                 switch (userChoice)
                 {
                     case 1:
+                        Console.WriteLine("Let's start to add a new product");
+                        Console.WriteLine("Please Enter an ID of product");
+                        string productId = Console.ReadLine() ?? "";
+                        Console.WriteLine("Please Enter a Name of product");
+                        string productName = Console.ReadLine() ?? "";
+                        Console.WriteLine("Please Enter a category of product");
+                        string productCategory = Console.ReadLine() ?? "";
+                        Console.WriteLine("Please Enter a price of product");
+                        Double.TryParse(Console.ReadLine(), out double productPrice);
+                        // double productPrice = Convert.ToDouble(Console.ReadLine());
+                        Console.WriteLine("Please Enter a quantity of product");
+                        int.TryParse(Console.ReadLine(), out int productQuantity);
+                        // int productQuantity = Console.ReadLine();
+                        productsList.Add(new Product(productId, productName, productCategory, productPrice, productQuantity ));
                         break;
                     case 2:
                     foreach ( Product product in productsList)
@@ -63,8 +79,11 @@ namespace Program
                     case 3:
                         break;
                     case 4:
-                    return;
+                        isActive = false;
+                        break;
+                        // return;
                 }
+            }
             }
         }
     }
