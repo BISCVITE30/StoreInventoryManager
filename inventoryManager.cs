@@ -73,6 +73,15 @@ namespace Program
                         ClearTerminal();
                         Console.WriteLine("Please Enter an ID of product");
                         string productId = Console.ReadLine() ?? "";
+                        foreach(Product product in productsList)
+                            {
+                                while(product.Id == productId)
+                                {
+                                    ClearTerminal();
+                                    Console.WriteLine("This ID already exists, please choose another ID");
+                                    productId = Console.ReadLine() ?? "";
+                                }
+                            }
                         Console.WriteLine("Please Enter a Name of product");
                         string productName = Console.ReadLine() ?? "";
                         Console.WriteLine("Please Enter a category of product");
@@ -83,6 +92,13 @@ namespace Program
                         Console.WriteLine("Please Enter a quantity of product");
                         int.TryParse(Console.ReadLine(), out int productQuantity);
                         // int productQuantity = Console.ReadLine();
+                        if(productId == "" || productName == "" || productCategory == "")
+                            {
+                                ClearTerminal();
+                                Console.WriteLine("Incorrect input");
+                                PressF();
+                                break;
+                            }
                         productsList.Add(new Product(productId, productName, productCategory, productPrice, productQuantity ));
                         PressF();
                         break;
