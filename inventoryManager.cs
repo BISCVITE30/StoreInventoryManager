@@ -4,7 +4,6 @@ namespace Program
 
     class Product
     {
-        // add Id, Name, Category, Price, Quantity
         public string Id {get; private set;}
         public string Name {get; private set;}
         public string Category {get; private set;}
@@ -60,7 +59,6 @@ namespace Program
             {
                 Console.WriteLine(option);
             }
-            // Console.WriteLine(productsList[1].Name);
 
             if (int.TryParse(Console.ReadLine() ?? "", out int userChoice))
             {
@@ -69,18 +67,13 @@ namespace Program
                     case 1:
                         ClearTerminal();
                         Console.WriteLine("Let's start to add a new product");
-                        PressF();
-                        ClearTerminal();
                         Console.WriteLine("Please Enter an ID of product");
                         string productId = Console.ReadLine() ?? "";
-                        foreach(Product product in productsList)
+                            while(productsList.Any(p => p.Id.Equals(productId, StringComparison.OrdinalIgnoreCase)) || string.IsNullOrWhiteSpace(productId))
                             {
-                                while(product.Id == productId)
-                                {
-                                    ClearTerminal();
-                                    Console.WriteLine("This ID already exists, please choose another ID");
-                                    productId = Console.ReadLine() ?? "";
-                                }
+                                ClearTerminal();
+                                Console.WriteLine("This ID already exists or input incorrect, please choose another ID");
+                                productId = Console.ReadLine() ?? "";
                             }
                         Console.WriteLine("Please Enter a Name of product");
                         string productName = Console.ReadLine() ?? "";
@@ -92,7 +85,7 @@ namespace Program
                         Console.WriteLine("Please Enter a quantity of product");
                         int.TryParse(Console.ReadLine(), out int productQuantity);
                         // int productQuantity = Console.ReadLine();
-                        if(productId == "" || productName == "" || productCategory == "")
+                        if(string.IsNullOrWhiteSpace(productName) || string.IsNullOrWhiteSpace(productCategory))
                             {
                                 ClearTerminal();
                                 Console.WriteLine("Incorrect input");
@@ -140,7 +133,6 @@ namespace Program
                                     if(product.Id.Contains(idToCompare, StringComparison.OrdinalIgnoreCase))
                                     {
                                         Console.WriteLine($"{product.Id} | {product.Name} | {product.Category} | ${product.Price} | {product.Quantity}pc.");
-                                        break;
                                     };
                                 };
                                 PressF();
@@ -150,7 +142,6 @@ namespace Program
                         ClearTerminal();
                         isActive = false;
                         break;
-                        // return;
                 }
             }
             }
