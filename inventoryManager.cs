@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Data.Sqlite;
 namespace Program
 {
 
@@ -32,8 +33,86 @@ namespace Program
             Console.WriteLine();
             Console.WriteLine();
         }
-        static public void Main(string[] args)
+
+        public static void InitializeDatabase()
         {
+            string connectionString = "Data Source=inventory.db";
+
+            using( var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+
+                string createTableSql = @"
+                CREATE TABLE IF NOT EXISTS Products (
+                Id TEXT PRIMARY KEY,
+                Name TEXT NOT NULL,
+                Category TEXT NOT NULL,
+                Price REAL NOT NULL,
+                Quantity INTEGER NOT NULL);";
+
+                using (var command = new SqliteCommand(createTableSql, connection))
+                {
+                  command.ExecuteNonQuery();  
+                };
+            };            
+        }
+
+        public static void AddProduct(string id, string name, string category, double price, int quantity)
+        {
+            string connectionString = "Data Source=inventory.db";
+
+            using(var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+
+                string insertSql = @"
+                INSERT INTO Products(Id, Name, Category, Price, Quantity)
+                VALUES (@Id, @Name, @Category, @Price, @Quantity);";
+
+                using(var command = new SqliteCommand(insertSql, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    command.Parameters.AddWithValue("@Name", name);
+                    command.Parameters.AddWithValue("@Category", category);
+                    command.Parameters.AddWithValue("@Price", price);
+                    command.Parameters.AddWithValue("@Quantity", quantity);
+
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public static void GetAllProducts()
+        {
+            string connectionString = "Data Source=inventory.db";
+
+            using(var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+
+                string selectSql = "SELECT Id, Name, Category, Price, Quantity FROM Products;";
+
+                using(var command = new SqliteCommand(selectSql, connection))
+                {
+                    using(var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string id = reader.GetString(0);
+                            string name = reader.GetString(1);
+                            string category = reader.GetString(2);
+                            string price = reader.GetString(3);
+                            string quantity = reader.GetString(4);
+
+                            Console.WriteLine($"{id} | {name} | {category} | {price} | Stock:{quantity}");
+                        }
+                    }
+                }
+            }
+        }
+        public static void Main(string[] args)
+        {
+            InitializeDatabase();
             bool isActive = true;
             List<Product> productsList= new List<Product>()
             {
@@ -92,15 +171,17 @@ namespace Program
                                 PressF();
                                 break;
                             }
-                        productsList.Add(new Product(productId, productName, productCategory, productPrice, productQuantity ));
+                        AddProduct(productId, productName, productCategory, productPrice, productQuantity);
+                        // productsList.Add(new Product(productId, productName, productCategory, productPrice, productQuantity ));
                         PressF();
                         break;
                     case 2:
                     ClearTerminal();
-                    foreach ( Product product in productsList)
-                        {
-                            Console.WriteLine($"{product.Id} | {product.Name} | {product.Category} | ${product.Price} | {product.Quantity}pc.");
-                        }
+                    GetAllProducts();
+                    // foreach ( Product product in productsList)
+                    //     {
+                    //         Console.WriteLine($"{product.Id} | {product.Name} | {product.Category} | ${product.Price} | {product.Quantity}pc.");
+                    //     }
                         PressF();
                         break;
                     case 3:
