@@ -101,26 +101,73 @@ namespace Program
                             string id = reader.GetString(0);
                             string name = reader.GetString(1);
                             string category = reader.GetString(2);
-                            string price = reader.GetString(3);
-                            string quantity = reader.GetString(4);
+                            double price = reader.GetDouble(3);
+                            int quantity = reader.GetInt32(4);
 
-                            Console.WriteLine($"{id} | {name} | {category} | {price} | Stock:{quantity}");
+                            Console.WriteLine($"{id} | {name} | {category} | {price} | Stock: {quantity}");
                         }
                     }
+                }
+            }
+        }
+
+        public static void SeedDataBase()
+        {
+            string connectionString = "Data Source=inventory.db";
+
+            using(var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+
+                string selectSql = "SELECT COUNT(*) FROM Products";
+
+                using(var command = new SqliteCommand(selectSql, connection))
+                {
+                    long count = (long)command.ExecuteScalar();
+
+                    if(count == 0)
+                    {
+                        AddProduct("P001", "Wireless Mouse", "Electronics", 29.99, 15);
+                        AddProduct("P002", "Mechanical Keyboard", "Electronics", 89.50, 8);
+                        AddProduct("P003", "Espresso Coffee Beans", "Groceries", 18.20, 25);
+                        AddProduct("P004", "Stainless Water Bottle", "Home & Kitchen", 14.99, 3);
+                        AddProduct("P005", "USB-C Charging Cable", "Electronics", 9.99, 40);
+                    }
+                }
+            }
+            
+        }
+
+        public static bool ProductExists(string id)
+        {
+            string connectionString = "Data Source=inventory.db";
+
+            using(var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+
+                string selectCountSql = "SELECT COUNT(*) FROM Products WHERE Id = @Id";
+                using(var command = new SqliteCommand(selectCountSql, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+
+                    long count = (long)command.ExecuteScalar();
+                    return count > 0;
                 }
             }
         }
         public static void Main(string[] args)
         {
             InitializeDatabase();
+            SeedDataBase();
             bool isActive = true;
             List<Product> productsList= new List<Product>()
             {
                 new Product("P001", "Wireless Mouse", "Electronics", 29.99, 15), 
-                new Product("P002", "Mechanical Keyboard", "Electronic", 89.50, 8),
+                new Product("P002", "Mechanical Keyboard", "Electronics", 89.50, 8),
                 new Product("P003", "Espresso Coffee Beans", "Groceries", 18.20, 25),
-                new Product("P054", "Stainless Water Bottle", "Home & Kitchen", 14.99, 3),
-                new Product("P005", "USB-C Charging Cable", "Electronic", 9.99, 40)
+                new Product("P004", "Stainless Water Bottle", "Home & Kitchen", 14.99, 3),
+                new Product("P005", "USB-C Charging Cable", "Electronics", 9.99, 40)
             };
 
             while(isActive)
@@ -148,7 +195,7 @@ namespace Program
                         Console.WriteLine("Let's start to add a new product");
                         Console.WriteLine("Please Enter an ID of product");
                         string productId = Console.ReadLine() ?? "";
-                            while(productsList.Any(p => p.Id.Equals(productId, StringComparison.OrdinalIgnoreCase)) || string.IsNullOrWhiteSpace(productId))
+                            while(ProductExists(productId) || string.IsNullOrWhiteSpace(productId))
                             {
                                 ClearTerminal();
                                 Console.WriteLine("This ID already exists or input incorrect, please choose another ID");
