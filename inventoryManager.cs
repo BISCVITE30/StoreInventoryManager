@@ -20,8 +20,9 @@ namespace Program
             this.Quantity = Quantity;
         }
     }
-    class inventoryManager
+    class InventoryManager
     {
+        private const string connectionString = "Data Source=inventory.db";
         public static void PressF()
         {
             Console.WriteLine("\nPress Enter to continue");
@@ -36,9 +37,7 @@ namespace Program
 
         public static void InitializeDatabase()
         {
-            string connectionString = "Data Source=inventory.db";
-
-            using( var connection = new SqliteConnection(connectionString))
+            using( var connection = new SqliteConnection(InventoryManager.connectionString))
             {
                 connection.Open();
 
@@ -59,9 +58,8 @@ namespace Program
 
         public static void AddProduct(string id, string name, string category, double price, int quantity)
         {
-            string connectionString = "Data Source=inventory.db";
-
-            using(var connection = new SqliteConnection(connectionString))
+        
+            using(var connection = new SqliteConnection(InventoryManager.connectionString))
             {
                 connection.Open();
 
@@ -84,9 +82,7 @@ namespace Program
 
         public static void GetAllProducts()
         {
-            string connectionString = "Data Source=inventory.db";
-
-            using(var connection = new SqliteConnection(connectionString))
+            using(var connection = new SqliteConnection(InventoryManager.connectionString))
             {
                 connection.Open();
 
@@ -113,9 +109,7 @@ namespace Program
 
         public static void SeedDataBase()
         {
-            string connectionString = "Data Source=inventory.db";
-
-            using(var connection = new SqliteConnection(connectionString))
+            using(var connection = new SqliteConnection(InventoryManager.connectionString))
             {
                 connection.Open();
 
@@ -140,9 +134,7 @@ namespace Program
 
         public static bool ProductExists(string id)
         {
-            string connectionString = "Data Source=inventory.db";
-
-            using(var connection = new SqliteConnection(connectionString))
+            using(var connection = new SqliteConnection(InventoryManager.connectionString))
             {
                 connection.Open();
 
@@ -156,19 +148,80 @@ namespace Program
                 }
             }
         }
+
+        public static void SearchByName(string search)
+        {
+            using(var connection = new SqliteConnection(InventoryManager.connectionString))
+            {
+                connection.Open();
+
+                string selectSql = "SELECT * FROM Products WHERE Name LIKE @Search";
+                using(var command = new SqliteCommand(selectSql, connection))
+                {
+                    command.Parameters.AddWithValue("@Search", $"%{search}%");
+
+                    using(var reader = command.ExecuteReader())
+                    {
+                        bool found = false;
+                        while (reader.Read())
+                        {
+                            string id = reader.GetString(0);
+                            string name = reader.GetString(1);
+                            string category = reader.GetString(2);
+                            double price = reader.GetDouble(3);
+                            int quantity = reader.GetInt32(4);
+
+                            Console.WriteLine($"{id} | {name} | {category} | {price} | Stock: {quantity}");
+                            found = true;
+                        }
+                        if(!found)
+                        {
+                            Console.WriteLine("No products found");
+                        }
+                    }
+                }
+            }
+        }
+        public static void SearchById(string search)
+        {
+            using(var connection = new SqliteConnection(InventoryManager.connectionString))
+            {
+                connection.Open();
+
+                string selectSql = "SELECT * FROM Products WHERE Id LIKE @Search";
+                using(var command = new SqliteCommand(selectSql, connection))
+                {
+                    command.Parameters.AddWithValue("@Search", $"%{search}%");
+
+                    using(var reader = command.ExecuteReader())
+                    {
+                        bool found = false;
+                        while (reader.Read())
+                        {
+                            string id = reader.GetString(0);
+                            string name = reader.GetString(1);
+                            string category = reader.GetString(2);
+                            double price = reader.GetDouble(3);
+                            int quantity = reader.GetInt32(4);
+
+                            Console.WriteLine($"{id} | {name} | {category} | {price} | Stock: {quantity}");
+                            found = true;
+                        }
+
+                        if (!found)
+                        {
+                            Console.WriteLine("No products found");
+                        }
+                    }
+                }
+            }
+        }
+
         public static void Main(string[] args)
         {
             InitializeDatabase();
             SeedDataBase();
             bool isActive = true;
-            List<Product> productsList= new List<Product>()
-            {
-                new Product("P001", "Wireless Mouse", "Electronics", 29.99, 15), 
-                new Product("P002", "Mechanical Keyboard", "Electronics", 89.50, 8),
-                new Product("P003", "Espresso Coffee Beans", "Groceries", 18.20, 25),
-                new Product("P004", "Stainless Water Bottle", "Home & Kitchen", 14.99, 3),
-                new Product("P005", "USB-C Charging Cable", "Electronics", 9.99, 40)
-            };
 
             while(isActive)
             {
@@ -207,10 +260,8 @@ namespace Program
                         string productCategory = Console.ReadLine() ?? "";
                         Console.WriteLine("Please Enter a price of product");
                         Double.TryParse(Console.ReadLine(), out double productPrice);
-                        // double productPrice = Convert.ToDouble(Console.ReadLine());
                         Console.WriteLine("Please Enter a quantity of product");
                         int.TryParse(Console.ReadLine(), out int productQuantity);
-                        // int productQuantity = Console.ReadLine();
                         if(string.IsNullOrWhiteSpace(productName) || string.IsNullOrWhiteSpace(productCategory))
                             {
                                 ClearTerminal();
@@ -219,16 +270,11 @@ namespace Program
                                 break;
                             }
                         AddProduct(productId, productName, productCategory, productPrice, productQuantity);
-                        // productsList.Add(new Product(productId, productName, productCategory, productPrice, productQuantity ));
                         PressF();
                         break;
                     case 2:
-                    ClearTerminal();
-                    GetAllProducts();
-                    // foreach ( Product product in productsList)
-                    //     {
-                    //         Console.WriteLine($"{product.Id} | {product.Name} | {product.Category} | ${product.Price} | {product.Quantity}pc.");
-                    //     }
+                        ClearTerminal();
+                        GetAllProducts();
                         PressF();
                         break;
                     case 3:
@@ -243,26 +289,15 @@ namespace Program
                                 Console.WriteLine("Enter the Name of product");
                                 string nameToCompare = Console.ReadLine() ?? "";
                                 ClearTerminal();
-                                foreach(Product product in productsList){
-                                    if(product.Name.Contains(nameToCompare, StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        Console.WriteLine($"{product.Id} | {product.Name} | {product.Category} | ${product.Price} | {product.Quantity}pc.");
-                                    };
-                                    continue;
-                                };
-                                        PressF();
+                                SearchByName(nameToCompare);
+                                PressF();
                             } else if( ChoosenNum == 2 )
                             {
                                 ClearTerminal();
                                 Console.WriteLine("Enter the ID of product");
                                 string idToCompare = Console.ReadLine() ?? "";
                                 ClearTerminal();
-                                foreach(Product product in productsList){
-                                    if(product.Id.Contains(idToCompare, StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        Console.WriteLine($"{product.Id} | {product.Name} | {product.Category} | ${product.Price} | {product.Quantity}pc.");
-                                    };
-                                };
+                                SearchById(idToCompare);
                                 PressF();
                             };
                             break;
