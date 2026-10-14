@@ -82,7 +82,7 @@ namespace Program
             }
         }
 
-        public static void GetAllProducts()
+        public static List<Product> GetAllProducts()
         {
             using(var connection = new SqliteConnection(InventoryManager.connectionString))
             {
@@ -92,24 +92,15 @@ namespace Program
 
                 using(var command = new SqliteCommand(selectSql, connection))
                 {
-                    using(var reader = command.ExecuteReader())
+                        using(var reader = command.ExecuteReader())
                     {
-                        while (reader.Read())
-                        {
-                            string id = reader.GetString(0);
-                            string name = reader.GetString(1);
-                            string category = reader.GetString(2);
-                            double price = reader.GetDouble(3);
-                            int quantity = reader.GetInt32(4);
-
-                            Console.WriteLine($"{id} | {name} | {category} | ${price} | Stock: {quantity}");
-                        }
+                        return InventoryManager.ReadProducts(reader);
+                    }
                     }
                 }
             }
-        }
 
-        public static void DeleteProduct(string id)
+        public static void DeleteProductById(string id)
         {
             using(var connection = new SqliteConnection(InventoryManager.connectionString))
             {
@@ -168,7 +159,25 @@ namespace Program
             }
         }
 
-        public static void SearchByName(string search)
+        private static List<Product> ReadProducts(SqliteDataReader reader)
+        {
+                        List<Product> res = new List<Product>();
+
+                        while (reader.Read())
+                        {
+                            string id = reader.GetString(0);
+                            string name = reader.GetString(1);
+                            string category = reader.GetString(2);
+                            double price = reader.GetDouble(3);
+                            int quantity = reader.GetInt32(4);
+
+                            res.Add(new Product(id,name,category,price,quantity));
+                        }
+
+                        return res;
+        }
+
+        public static List<Product> SearchByName(string search)
         {
             using(var connection = new SqliteConnection(InventoryManager.connectionString))
             {
@@ -181,22 +190,7 @@ namespace Program
 
                     using(var reader = command.ExecuteReader())
                     {
-                        bool found = false;
-                        while (reader.Read())
-                        {
-                            string id = reader.GetString(0);
-                            string name = reader.GetString(1);
-                            string category = reader.GetString(2);
-                            double price = reader.GetDouble(3);
-                            int quantity = reader.GetInt32(4);
-
-                            Console.WriteLine($"{id} | {name} | {category} | ${price} | Stock: {quantity}");
-                            found = true;
-                        }
-                        if(!found)
-                        {
-                            Console.WriteLine("No products found");
-                        }
+                        return InventoryManager.ReadProducts(reader);
                     }
                 }
             }
@@ -214,36 +208,46 @@ namespace Program
 
                     using(var reader = command.ExecuteReader())
                     {
-                        bool found = false;
-
-                        List<Product> res = new List<Product>();
-
-                        while (reader.Read())
-                        {
-                            found = true;
-
-                            string id = reader.GetString(0);
-                            string name = reader.GetString(1);
-                            string category = reader.GetString(2);
-                            double price = reader.GetDouble(3);
-                            int quantity = reader.GetInt32(4);
-
-                            // Console.WriteLine($"{id} | {name} | {category} | ${price} | Stock: {quantity}");
-                            res.Add(new Product(id, name,category,price,quantity));
-                                // new Product($"{id} | {name} | {category} | ${price} | Stock: {quantity}");
-                            // return res;
-                            // return($"{id} | {name} | {category} | ${price} | Stock: {quantity}");
-                        }
-
-                        // if (!found)
-                        // {
-                        //     Console.WriteLine("No products found");
-                        // }
-
-                        return res;
+                        return InventoryManager.ReadProducts(reader);
                     }
                 }
             }
+        }
+
+        public static void SearchingProducts(List<Product> result)
+        {
+            if (result.Count == 0)
+                {
+                    Console.WriteLine("No products found");
+                    PressF();
+                    return;
+                }
+                
+                for(int i = 0; i < result.Count; i++)
+                {
+                    Console.WriteLine($"{i + 1}. {result[i]}");
+                }
+
+                Console.WriteLine("\nSelect the product");
+                if(int.TryParse(Console.ReadLine(), out int productSelected) && productSelected > 0 && productSelected <= result.Count)
+                {
+                    ClearTerminal();
+                    Product chosen = result[productSelected - 1];
+                    Console.WriteLine(chosen);
+                    Console.WriteLine("1. Delete");
+                    if(int.TryParse(Console.ReadLine(), out int actionSelected) && actionSelected > 0 && actionSelected < 2)
+                    {
+                        Console.WriteLine("Deleting the product...");
+                        DeleteProductById(result[productSelected - 1].Id);
+                    } else
+                    {
+                        Console.WriteLine("Invalid input");
+                    }
+                } else
+                {
+                    Console.WriteLine("Invalid input");
+                }
+                PressF();
         }
 
         public static void Main(string[] args)
@@ -312,7 +316,17 @@ namespace Program
                         break;
                     case 2:
                         ClearTerminal();
-                        GetAllProducts();
+                        List<Product>? productList = GetAllProducts();
+                        if (productList.Count == 0)
+                            {
+                                Console.WriteLine("No products found");
+                                PressF();
+                                break;
+                            }
+                        foreach(Product product in productList)
+                            {
+                                Console.WriteLine(product);
+                            }
                         PressF();
                         break;
                     case 3:
@@ -320,59 +334,23 @@ namespace Program
                         Console.WriteLine("Choose the searching option");
                         Console.WriteLine("1. Searching for product Name");
                         Console.WriteLine("2. Searching for product ID");
-                        int.TryParse(Console.ReadLine(), out int ChoosenNum);
-                        if( ChoosenNum == 1)
+                        int.TryParse(Console.ReadLine(), out int selectedNum);
+                        if( selectedNum == 1)
                             {
                                 ClearTerminal();
                                 Console.WriteLine("Enter the Name of product");
                                 string nameToSearch = Console.ReadLine() ?? "";
                                 ClearTerminal();
-                                SearchByName(nameToSearch);
-                                PressF();
-                            } else if( ChoosenNum == 2 )
+                                List<Product>? results = SearchByName(nameToSearch);
+                                SearchingProducts(results);
+                            } else if( selectedNum == 2 )
                             {
                                 ClearTerminal();
                                 Console.WriteLine("Enter the ID of product");
                                 string idToSearch = Console.ReadLine() ?? "";
                                 ClearTerminal();
-                                List<Product> results = SearchById(idToSearch);
-                                if (results.Count == 0)
-                                {
-                                    Console.WriteLine("No products found");
-                                    PressF();
-                                    break;
-                                }
-
-                                for(int i = 0; i < results.Count; i++)
-                                {
-                                    Console.WriteLine($"{i + 1}. {results[i]}");
-                                }
-
-                                Console.WriteLine("\nSelect the product");
-                                if(int.TryParse(Console.ReadLine(), out int productSelected) && productSelected > 0 && productSelected <= results.Count)
-                                {
-                                    ClearTerminal();
-                                    Product chosen = results[productSelected - 1];
-                                    Console.WriteLine(chosen);
-                                    Console.WriteLine("1. Delete");
-                                    if(int.TryParse(Console.ReadLine(), out int actionSelected) && actionSelected > 0 && actionSelected < 2)
-                                    {
-                                        Console.WriteLine("Deleting the product...");
-                                        // Console.WriteLine(results[productSelected - 1].Id);
-                                        DeleteProduct(results[productSelected - 1].Id);
-                                    } else
-                                    {
-                                        Console.WriteLine("Invalid input");
-                                    }
-                                } else
-                                {
-                                    Console.WriteLine("Invalid input");
-                                }
-                                // foreach(Product product in results)
-                                // {   
-                                // Console.WriteLine($"{product.ToString()}");
-                                // }
-                                PressF();
+                                List<Product>? results = SearchById(idToSearch);
+                                SearchingProducts(results);
                             };
                             break;
                     case 4:
