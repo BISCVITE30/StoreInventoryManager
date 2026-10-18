@@ -102,13 +102,13 @@ namespace Program
 
                 using(var command = new SqliteCommand(selectSql, connection))
                 {
-                        using(var reader = command.ExecuteReader())
+                    using(var reader = command.ExecuteReader())
                     {
                         return InventoryManager.ReadProducts(reader);
                     }
-                    }
                 }
             }
+        }
 
         public static void DeleteProductById(string id)
         {
@@ -171,20 +171,20 @@ namespace Program
 
         private static List<Product> ReadProducts(SqliteDataReader reader)
         {
-                        List<Product> res = new List<Product>();
+            List<Product> res = new List<Product>();
 
-                        while (reader.Read())
-                        {
-                            string id = reader.GetString(0);
-                            string name = reader.GetString(1);
-                            string category = reader.GetString(2);
-                            double price = reader.GetDouble(3);
-                            int quantity = reader.GetInt32(4);
+            while (reader.Read())
+                {
+                    string id = reader.GetString(0);
+                    string name = reader.GetString(1);
+                    string category = reader.GetString(2);
+                    double price = reader.GetDouble(3);
+                    int quantity = reader.GetInt32(4);
 
-                            res.Add(new Product(id,name,category,price,quantity));
-                        }
+                    res.Add(new Product(id,name,category,price,quantity));
+                }
 
-                        return res;
+            return res;
         }
 
         public static List<Product> SearchByName(string search)
@@ -249,11 +249,13 @@ namespace Program
                     {
                         Console.WriteLine("Deleting the product...");
                         DeleteProductById(result[productSelected - 1].Id);
-                    } else
+                    } 
+                    else
                     {
                         Console.WriteLine("Invalid input");
                     }
-                } else
+                } 
+                else
                 {
                     Console.WriteLine("Invalid input");
                 }
@@ -347,48 +349,13 @@ namespace Program
                     case 1:
                         ClearTerminal();
                         Console.WriteLine("Let's start to add a new product");
+
                         string productId = ReadString("Please Enter an ID of product", id => !ProductExists(id), "This ID already exists or input incorrect, please choose another ID");
-                        // Console.WriteLine("Please Enter an ID of product");
-                        // string productId = Console.ReadLine() ?? "";
-                        // while(ProductExists(productId) || string.IsNullOrWhiteSpace(productId))
-                        // {
-                        //     ClearTerminal();
-                        //     Console.WriteLine("This ID already exists or input incorrect, please choose another ID");
-                        //     productId = Console.ReadLine() ?? "";
-                        // };
-                        
                         string productName = ReadString("Please Enter a Name of product");
                         string productCategory = ReadString("Please Enter a Category of product");
-                        // Console.WriteLine("Please Enter a Name of product");
-                        // string productName = Console.ReadLine() ?? "";
-                        // Console.WriteLine("Please Enter a category of product");
-                        // string productCategory = Console.ReadLine() ?? "";
-
                         double productPrice = ReadDouble("Please Enter a price of product");
-                        // Console.WriteLine("Please Enter a price of product");
-                        // double.TryParse(Console.ReadLine(), out double productPrice);
-
-                        // while(productPrice == 0)
-                        // {
-                        //     ClearTerminal();
-                        //     Console.WriteLine("Incorrect input. Price must be a positive number.");
-                        //     PressF();
-                        //     ClearTerminal();
-                        //     Console.WriteLine("Please Enter a price of product");
-                        //     double.TryParse(Console.ReadLine(), out productPrice);
-                        // };
-
                         int productQuantity = ReadInt("Please Enter a quantity of product");
-                            // Console.WriteLine("Please Enter a quantity of product");
-                            // int.TryParse(Console.ReadLine(), out int productQuantity);
 
-                            // if(string.IsNullOrWhiteSpace(productName) || string.IsNullOrWhiteSpace(productCategory))
-                            // {
-                            //     ClearTerminal();
-                            //     Console.WriteLine("Incorrect input");
-                            //     PressF();
-                            //     break;
-                            // };
                         try
                         {   
                             AddProduct(productId, productName, productCategory, productPrice, productQuantity);
@@ -409,16 +376,16 @@ namespace Program
                         List<Product> productList = GetAllProducts();
 
                         if (productList.Count == 0)
-                            {
-                                Console.WriteLine("No products found");
-                                PressF();
-                                break;
-                            };
+                        {
+                            Console.WriteLine("No products found");
+                            PressF();
+                            break;
+                        };
 
                         foreach(Product product in productList)
-                            {
-                                Console.WriteLine(product);
-                            };
+                        {
+                            Console.WriteLine(product);
+                        };
 
                         PressF();
                         break;
@@ -430,25 +397,25 @@ namespace Program
                         int.TryParse(Console.ReadLine(), out int selectedNum);
 
                         if( selectedNum == 1)
-                            {
-                                ClearTerminal();
-                                Console.WriteLine("Enter the Name of product");
-                                string nameToSearch = Console.ReadLine() ?? "";
-                                ClearTerminal();
-                                List<Product> results = SearchByName(nameToSearch);
-                                SearchingProducts(results);
-                            } 
-                            else if( selectedNum == 2 )
-                            {
-                                ClearTerminal();
-                                Console.WriteLine("Enter the ID of product");
-                                string idToSearch = Console.ReadLine() ?? "";
-                                ClearTerminal();
-                                List<Product> results = SearchById(idToSearch);
-                                SearchingProducts(results);
-                            };
+                        {
+                            ClearTerminal();
+                            Console.WriteLine("Enter the Name of product");
+                            string nameToSearch = Console.ReadLine() ?? "";
+                            ClearTerminal();
+                            List<Product> results = SearchByName(nameToSearch);
+                            SearchingProducts(results);
+                        } 
+                        else if( selectedNum == 2 )
+                        {
+                            ClearTerminal();
+                            Console.WriteLine("Enter the ID of product");
+                            string idToSearch = Console.ReadLine() ?? "";
+                            ClearTerminal();
+                            List<Product> results = SearchById(idToSearch);
+                            SearchingProducts(results);
+                        };
 
-                            break;
+                        break;
                     case 4:
                         ClearTerminal();
                         isActive = false;
