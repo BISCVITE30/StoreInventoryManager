@@ -110,7 +110,7 @@ namespace Program
             }
         }
 
-        public static void DeleteProductById(string id)
+        public static bool DeleteProductById(string id)
         {
             using(var connection = new SqliteConnection(InventoryManager.connectionString))
             {
@@ -123,6 +123,8 @@ namespace Program
                     command.Parameters.AddWithValue("@Id", id);
 
                     command.ExecuteNonQuery();
+
+                    return true;
                 }
             }
         }
@@ -227,39 +229,46 @@ namespace Program
         public static void SearchingProducts(List<Product> result)
         {
             if (result.Count == 0)
+            {
+                Console.WriteLine("No products found");
+                PressF();
+                return;
+            }
+            
+            for(int i = 0; i < result.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {result[i]}");
+            }
+            Console.WriteLine("\nSelect the product");
+            if(int.TryParse(Console.ReadLine(), out int productSelected) && productSelected > 0 && productSelected <= result.Count)
+            {
+                ClearTerminal();
+                Product selected = result[productSelected - 1];
+                Console.WriteLine(selected);
+                Console.WriteLine("1. Delete");
+                if(int.TryParse(Console.ReadLine(), out int actionSelected) && actionSelected > 0 && actionSelected < 2)
                 {
-                    Console.WriteLine("No products found");
-                    PressF();
-                    return;
-                }
-                
-                for(int i = 0; i < result.Count; i++)
-                {
-                    Console.WriteLine($"{i + 1}. {result[i]}");
-                }
+                    Console.WriteLine("Are you sure you want to delete this product? (Y/N)");
+                    string deleteOrNot = Console.ReadLine() ?? "";
 
-                Console.WriteLine("\nSelect the product");
-                if(int.TryParse(Console.ReadLine(), out int productSelected) && productSelected > 0 && productSelected <= result.Count)
-                {
-                    ClearTerminal();
-                    Product selected = result[productSelected - 1];
-                    Console.WriteLine(selected);
-                    Console.WriteLine("1. Delete");
-                    if(int.TryParse(Console.ReadLine(), out int actionSelected) && actionSelected > 0 && actionSelected < 2)
+                    if( string.Equals( deleteOrNot, "Y", StringComparison.OrdinalIgnoreCase) && DeleteProductById(result[productSelected - 1].Id))
                     {
-                        Console.WriteLine("Deleting the product...");
-                        DeleteProductById(result[productSelected - 1].Id);
-                    } 
-                    else
+                        Console.WriteLine("Deletion complete");
+                    } else
                     {
-                        Console.WriteLine("Invalid input");
+                        Console.WriteLine("Deletion canceled");
                     }
                 } 
                 else
                 {
                     Console.WriteLine("Invalid input");
                 }
-                PressF();
+            } 
+            else
+            {
+                Console.WriteLine("Invalid input");
+            }
+            PressF();
         }
 
         public static double ReadDouble(string prompt)
