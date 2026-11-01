@@ -92,6 +92,24 @@ namespace Program
             }
         }
 
+        public static bool UpdateProduct(string id, int quantity)
+        {
+            using(var connection = new SqliteConnection(InventoryManager.connectionString))
+            {
+                connection.Open();
+
+                string updateSql = "UPDATE Products SET Quantity = @Quantity WHERE Id = @Id";
+
+                using(var command = new SqliteCommand(updateSql, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    command.Parameters.AddWithValue("@Quantity", quantity);
+
+                    return command.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
         public static List<Product> GetAllProducts()
         {
             using(var connection = new SqliteConnection(InventoryManager.connectionString))
@@ -122,9 +140,8 @@ namespace Program
                 {
                     command.Parameters.AddWithValue("@Id", id);
 
-                    command.ExecuteNonQuery();
 
-                    return true;
+                    return command.ExecuteNonQuery() > 0;
                 }
             }
         }
@@ -246,19 +263,34 @@ namespace Program
                 Product selected = result[productSelected - 1];
                 Console.WriteLine(selected);
                 Console.WriteLine("1. Delete");
-                if(int.TryParse(Console.ReadLine(), out int actionSelected) && actionSelected > 0 && actionSelected < 2)
+                Console.WriteLine("2. Update quantity");
+                if(int.TryParse(Console.ReadLine(), out int actionSelected) && actionSelected == 1)
                 {
-                    Console.WriteLine("Are you sure you want to delete this product? (Y/N)");
-                    string deleteOrNot = Console.ReadLine() ?? "";
+                //     Console.WriteLine("Are you sure you want to delete this product? (Y/N)");
+                //     string deleteOrNot = Console.ReadLine() ?? "";
 
-                    if( string.Equals( deleteOrNot, "Y", StringComparison.OrdinalIgnoreCase) && DeleteProductById(result[productSelected - 1].Id))
+                    if( ConfirmAction("Are you sure you want to delete this product? (Y/N)") && DeleteProductById(selected.Id))
                     {
                         Console.WriteLine("Deletion complete");
                     } else
                     {
                         Console.WriteLine("Deletion canceled");
                     }
-                } 
+                } else if(actionSelected == 2)
+                {
+                    int updatedQuantity = ReadInt("What quantity would you like to update this product to?");
+
+                    // Console.WriteLine("Are you sure you want to update this product? (Y/N)");
+                    // string updateOrNot = Console.ReadLine() ?? "";
+
+                    if( ConfirmAction("Are you sure you want to update this product? (Y/N)") && UpdateProduct(selected.Id, updatedQuantity))
+                    {
+                        Console.WriteLine("Update complete");
+                    } else
+                    {
+                        Console.WriteLine("Update canceled");
+                    }
+                }
                 else
                 {
                     Console.WriteLine("Invalid input");
@@ -269,6 +301,13 @@ namespace Program
                 Console.WriteLine("Invalid input");
             }
             PressF();
+        }
+
+        public static bool ConfirmAction(string prompt)
+        {
+            Console.WriteLine(prompt);
+            string answer = Console.ReadLine() ?? "";
+            return string.Equals( answer, "Y", StringComparison.OrdinalIgnoreCase);
         }
 
         public static double ReadDouble(string prompt)
@@ -338,99 +377,99 @@ namespace Program
             while(isActive)
             {
                 ClearTerminal();
-            string[] programMenu =
-            {
-                "1. Add a new product",
-                "2. View all products",
-                "3. Search for a product",
-                "4. Exit the program"
-            };
-
-            foreach( string option in programMenu)
-            {
-                Console.WriteLine(option);
-            }
-
-            if (int.TryParse(Console.ReadLine() ?? "", out int userChoice))
-            {
-                switch (userChoice)
+                string[] programMenu =
                 {
-                    case 1:
-                        ClearTerminal();
-                        Console.WriteLine("Let's start to add a new product");
+                    "1. Add a new product",
+                    "2. View all products",
+                    "3. Search for a product",
+                    "4. Exit the program"
+                };
 
-                        string productId = ReadString("Please Enter an ID of product", id => !ProductExists(id), "This ID already exists or input incorrect, please choose another ID");
-                        string productName = ReadString("Please Enter a Name of product");
-                        string productCategory = ReadString("Please Enter a Category of product");
-                        double productPrice = ReadDouble("Please Enter a price of product");
-                        int productQuantity = ReadInt("Please Enter a quantity of product");
+                foreach( string option in programMenu)
+                {
+                    Console.WriteLine(option);
+                }
 
-                        try
-                        {   
-                            AddProduct(productId, productName, productCategory, productPrice, productQuantity);
-                        }
-                        catch(ArgumentOutOfRangeException)
-                        {
-                            Console.WriteLine("\n[Error] Price and quantity cannot be negative!");
-                        }
-                        catch(ArgumentException)
-                        {
-                            Console.WriteLine("\n[Error] Product fields cannot be empty!");
-                        }
+                if (int.TryParse(Console.ReadLine() ?? "", out int userChoice))
+                {
+                    switch (userChoice)
+                    {
+                        case 1:
+                            ClearTerminal();
+                            Console.WriteLine("Let's start to add a new product");
 
-                        PressF();
-                        break;
-                    case 2:
-                        ClearTerminal();
-                        List<Product> productList = GetAllProducts();
+                            string productId = ReadString("Please Enter an ID of product", id => !ProductExists(id), "This ID already exists or input incorrect, please choose another ID");
+                            string productName = ReadString("Please Enter a Name of product");
+                            string productCategory = ReadString("Please Enter a Category of product");
+                            double productPrice = ReadDouble("Please Enter a price of product");
+                            int productQuantity = ReadInt("Please Enter a quantity of product");
 
-                        if (productList.Count == 0)
-                        {
-                            Console.WriteLine("No products found");
+                            try
+                            {   
+                                AddProduct(productId, productName, productCategory, productPrice, productQuantity);
+                            }
+                            catch(ArgumentOutOfRangeException)
+                            {
+                                Console.WriteLine("\n[Error] Price and quantity cannot be negative!");
+                            }
+                            catch(ArgumentException)
+                            {
+                                Console.WriteLine("\n[Error] Product fields cannot be empty!");
+                            }
+
                             PressF();
                             break;
-                        };
-
-                        foreach(Product product in productList)
-                        {
-                            Console.WriteLine(product);
-                        };
-
-                        PressF();
-                        break;
-                    case 3:
-                        ClearTerminal();
-                        Console.WriteLine("Choose the searching option");
-                        Console.WriteLine("1. Searching for product Name");
-                        Console.WriteLine("2. Searching for product ID");
-                        int.TryParse(Console.ReadLine(), out int selectedNum);
-
-                        if( selectedNum == 1)
-                        {
+                        case 2:
                             ClearTerminal();
-                            Console.WriteLine("Enter the Name of product");
-                            string nameToSearch = Console.ReadLine() ?? "";
-                            ClearTerminal();
-                            List<Product> results = SearchByName(nameToSearch);
-                            SearchingProducts(results);
-                        } 
-                        else if( selectedNum == 2 )
-                        {
-                            ClearTerminal();
-                            Console.WriteLine("Enter the ID of product");
-                            string idToSearch = Console.ReadLine() ?? "";
-                            ClearTerminal();
-                            List<Product> results = SearchById(idToSearch);
-                            SearchingProducts(results);
-                        };
+                            List<Product> productList = GetAllProducts();
 
-                        break;
-                    case 4:
-                        ClearTerminal();
-                        isActive = false;
-                        break;
+                            if (productList.Count == 0)
+                            {
+                                Console.WriteLine("No products found");
+                                PressF();
+                                break;
+                            };
+
+                            foreach(Product product in productList)
+                            {
+                                Console.WriteLine(product);
+                            };
+
+                            PressF();
+                            break;
+                        case 3:
+                            ClearTerminal();
+                            Console.WriteLine("Choose the searching option");
+                            Console.WriteLine("1. Searching for product Name");
+                            Console.WriteLine("2. Searching for product ID");
+                            int.TryParse(Console.ReadLine(), out int selectedNum);
+
+                            if( selectedNum == 1)
+                            {
+                                ClearTerminal();
+                                Console.WriteLine("Enter the Name of product");
+                                string nameToSearch = Console.ReadLine() ?? "";
+                                ClearTerminal();
+                                List<Product> results = SearchByName(nameToSearch);
+                                SearchingProducts(results);
+                            } 
+                            else if( selectedNum == 2 )
+                            {
+                                ClearTerminal();
+                                Console.WriteLine("Enter the ID of product");
+                                string idToSearch = Console.ReadLine() ?? "";
+                                ClearTerminal();
+                                List<Product> results = SearchById(idToSearch);
+                                SearchingProducts(results);
+                            };
+
+                            break;
+                        case 4:
+                            ClearTerminal();
+                            isActive = false;
+                            break;
+                    }
                 }
-            }
             }
         }
     }
