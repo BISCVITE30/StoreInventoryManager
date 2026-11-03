@@ -12,22 +12,22 @@ namespace Program
         public int Quantity {get; private set;}
         public override string ToString() => $"{Id} | {Name} | {Category} | ${Price} | Stock: {Quantity}";
 
-        public Product (string Id, string Name, string Category, double Price, int Quantity)
+        public Product (string id, string name, string category, double price, int quantity)
         {
 
-            if (string.IsNullOrWhiteSpace(Id) || string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(Category))
+            if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(category))
             {
                 throw new ArgumentException();
             }
-            if(Price < 0 || Quantity < 0)
+            if(price < 0 || quantity < 0)
             {
                 throw new ArgumentOutOfRangeException();
             }
-            this.Id = Id;
-            this.Name = Name;
-            this.Category = Category;
-            this.Price = Price;
-            this.Quantity = Quantity;
+            this.Id = id;
+            this.Name = name;
+            this.Category = category;
+            this.Price = price;
+            this.Quantity = quantity;
         }
 
     }
@@ -92,8 +92,13 @@ namespace Program
             }
         }
 
-        public static bool UpdateProduct(string id, int quantity)
+        public static bool UpdateProductQuantity(string id, int quantity)
         {
+            if(quantity < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(quantity));
+            }
+
             using(var connection = new SqliteConnection(InventoryManager.connectionString))
             {
                 connection.Open();
@@ -243,6 +248,54 @@ namespace Program
             }
         }
 
+        public static void PrintProducts(List<Product> prodList)
+        {
+            for(int i = 0; i < prodList.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {prodList[i]}");
+            }
+            Console.WriteLine("\nSelect the product");
+        }
+
+        public static Product? SelectProduct(List<Product> prodList)
+        {
+            if(int.TryParse(Console.ReadLine(), out int productSelected) && productSelected > 0 && productSelected <= prodList.Count)
+            {
+                ClearTerminal();
+                Product selected = prodList[productSelected - 1];
+
+                return selected;
+            };
+
+            return null;
+        }
+
+        public static void DeletionProduct(Product product)
+        {
+            if( ConfirmAction("Are you sure you want to delete this product? (Y/N)") && DeleteProductById(product.Id))
+                {
+                    Console.WriteLine("Deletion complete");
+                } 
+                else
+                {
+                    Console.WriteLine("Deletion canceled");
+                }
+        }
+
+        public static void UpdateProduct(Product productToUpdate)
+        {
+            int updatedQuantity = ReadInt("What quantity would you like to update this product to?");
+
+                if( ConfirmAction("Are you sure you want to update this product? (Y/N)") && UpdateProductQuantity(productToUpdate.Id, updatedQuantity))
+                {
+                    Console.WriteLine("Update complete");
+                } 
+                else
+                {
+                    Console.WriteLine("Update canceled");
+                }
+        }
+
         public static void SearchingProducts(List<Product> result)
         {
             if (result.Count == 0)
@@ -252,53 +305,40 @@ namespace Program
                 return;
             }
             
-            for(int i = 0; i < result.Count; i++)
+            PrintProducts(result);
+
+            Product? selected = SelectProduct(result);
+
+            if(selected == null)
             {
-                Console.WriteLine($"{i + 1}. {result[i]}");
+                Console.WriteLine("Invalid choice. Please try again.");
+                PressF();
+                return;
             }
-            Console.WriteLine("\nSelect the product");
-            if(int.TryParse(Console.ReadLine(), out int productSelected) && productSelected > 0 && productSelected <= result.Count)
+
+            Console.WriteLine(selected);
+            Console.WriteLine("1. Delete");
+            Console.WriteLine("2. Update quantity");
+
+            if(int.TryParse(Console.ReadLine(), out int actionSelected))
             {
-                ClearTerminal();
-                Product selected = result[productSelected - 1];
-                Console.WriteLine(selected);
-                Console.WriteLine("1. Delete");
-                Console.WriteLine("2. Update quantity");
-                if(int.TryParse(Console.ReadLine(), out int actionSelected) && actionSelected == 1)
+                if(actionSelected == 1)
                 {
-                //     Console.WriteLine("Are you sure you want to delete this product? (Y/N)");
-                //     string deleteOrNot = Console.ReadLine() ?? "";
-
-                    if( ConfirmAction("Are you sure you want to delete this product? (Y/N)") && DeleteProductById(selected.Id))
-                    {
-                        Console.WriteLine("Deletion complete");
-                    } else
-                    {
-                        Console.WriteLine("Deletion canceled");
-                    }
-                } else if(actionSelected == 2)
-                {
-                    int updatedQuantity = ReadInt("What quantity would you like to update this product to?");
-
-                    // Console.WriteLine("Are you sure you want to update this product? (Y/N)");
-                    // string updateOrNot = Console.ReadLine() ?? "";
-
-                    if( ConfirmAction("Are you sure you want to update this product? (Y/N)") && UpdateProduct(selected.Id, updatedQuantity))
-                    {
-                        Console.WriteLine("Update complete");
-                    } else
-                    {
-                        Console.WriteLine("Update canceled");
-                    }
+                    DeletionProduct(selected);
                 }
-                else
+                else if(actionSelected == 2)
                 {
-                    Console.WriteLine("Invalid input");
+                    UpdateProduct(selected);
+                } else
+                {
+                    Console.WriteLine("Invalid choice. Please try again.");
+                    PressF();
                 }
             } 
             else
             {
-                Console.WriteLine("Invalid input");
+                Console.WriteLine("Invalid choice. Please try again.");
+                PressF();
             }
             PressF();
         }
@@ -321,7 +361,7 @@ namespace Program
                 };
 
                 ClearTerminal();
-                Console.WriteLine("Incorrect input. Price must be a positive number.");
+                Console.WriteLine("Incorrect input. Price must be a zero or a positive number.");
                 PressF();
                 ClearTerminal();
             }
@@ -337,7 +377,7 @@ namespace Program
                 };
 
                 ClearTerminal();
-                Console.WriteLine("Incorrect input. Quantity must be a positive number.");
+                Console.WriteLine("Incorrect input. Quantity must be a zero or a positive number.");
                 PressF();
                 ClearTerminal();
             }
@@ -419,6 +459,7 @@ namespace Program
 
                             PressF();
                             break;
+
                         case 2:
                             ClearTerminal();
                             List<Product> productList = GetAllProducts();
@@ -437,6 +478,7 @@ namespace Program
 
                             PressF();
                             break;
+
                         case 3:
                             ClearTerminal();
                             Console.WriteLine("Choose the searching option");
@@ -461,14 +503,27 @@ namespace Program
                                 ClearTerminal();
                                 List<Product> results = SearchById(idToSearch);
                                 SearchingProducts(results);
-                            };
-
+                            }
+                            else
+                            {
+                                Console.WriteLine("Invalid choice. Please try again.");
+                            }
                             break;
+
                         case 4:
                             ClearTerminal();
                             isActive = false;
                             break;
+
+                        default:
+                            Console.WriteLine("Invalid choice. Please try again.");
+                            PressF();
+                            break;
                     }
+                }
+                else
+                {
+                    Console.WriteLine("Invalid choice. Please try again.");
                 }
             }
         }
